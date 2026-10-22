@@ -1,8 +1,6 @@
 package com.laopeng.autoskip;
 
 import android.app.Activity;
-import android.app.AlertDialog;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
@@ -70,7 +68,7 @@ class AppsPage {
     private Adapter adapter;
     private TextView tvInfo;
     private TextView tvEmpty;
-    private Button btnReset;
+    private Switch swHideDisabled;
     private Button btnAll;
     private Button btnRules;
     private Button btnOff;
@@ -99,7 +97,15 @@ class AppsPage {
         tvInfo = (TextView) root.findViewById(R.id.tvAppListInfo);
         tvEmpty = (TextView) root.findViewById(R.id.tvAppListEmpty);
         EditText etSearch = (EditText) root.findViewById(R.id.etSearch);
-        btnReset = (Button) root.findViewById(R.id.btnResetApps);
+        swHideDisabled = (Switch) root.findViewById(R.id.swHideDisabledApps);
+        swHideDisabled.setChecked(Prefs.get(act).isHideDisabledApps());
+        swHideDisabled.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton button, boolean checked) {
+                Prefs.get(act).setHideDisabledApps(checked);
+                applyFilter();
+            }
+        });
         btnAll = (Button) root.findViewById(R.id.btnFilterAll);
         btnRules = (Button) root.findViewById(R.id.btnFilterRules);
         btnOff = (Button) root.findViewById(R.id.btnFilterOff);
@@ -140,13 +146,6 @@ class AppsPage {
             @Override
             public void onClick(View v) {
                 setMode(MODE_OFF);
-            }
-        });
-
-        btnReset.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                confirmReset();
             }
         });
 
@@ -274,9 +273,11 @@ class AppsPage {
         if (adapter == null) return;
         shown.clear();
         String q = query == null ? "" : query.trim().toLowerCase(Locale.ROOT);
+        boolean hideDisabled = mode != MODE_OFF && Prefs.get(act).isHideDisabledApps();
         for (Row r : all) {
             if (mode == MODE_RULES && !r.hasRules) continue;
             if (mode == MODE_OFF && !r.disabled) continue;
+            if (hideDisabled && r.disabled) continue;
             if (q.length() > 0
                     && !r.label.toLowerCase(Locale.ROOT).contains(q)
                     && !r.pkg.toLowerCase(Locale.ROOT).contains(q)) continue;
@@ -287,7 +288,6 @@ class AppsPage {
         int off = Prefs.get(act).disabledAppCount();
         tvInfo.setText(act.getString(R.string.app_list_info, all.size(), off));
         tvEmpty.setVisibility((!loading && shown.isEmpty()) ? View.VISIBLE : View.GONE);
-        btnReset.setVisibility(off > 0 ? View.VISIBLE : View.GONE);
     }
 
     private void setDisabled(Row r, boolean disabled) {
@@ -296,23 +296,6 @@ class AppsPage {
         Prefs.get(act).setAppDisabled(r.pkg, disabled);
         toast(act.getString(disabled ? R.string.toast_app_off : R.string.toast_app_on, r.label));
         applyFilter();
-    }
-
-    private void confirmReset() {
-        new AlertDialog.Builder(act)
-                .setTitle(R.string.btn_reset_apps)
-                .setMessage(R.string.dlg_reset_apps)
-                .setNegativeButton(android.R.string.cancel, null)
-                .setPositiveButton(R.string.btn_reset_ok, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface d, int w) {
-                        Prefs.get(act).clearDisabledApps();
-                        for (Row r : all) r.disabled = false;
-                        applyFilter();
-                        toast(act.getString(R.string.toast_apps_reset));
-                    }
-                })
-                .show();
     }
 
     private void openDetail(Row r) {
