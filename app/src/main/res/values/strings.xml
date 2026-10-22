@@ -95,7 +95,6 @@
     <string name="btn_back">‹ 返回</string>
     <string name="hint_search_app">搜索应用名 / 包名</string>
     <string name="filter_all">全部</string>
-    <string name="filter_rules">有规则</string>
     <string name="filter_off">已停用</string>
     <string name="sw_hide_disabled_apps">隐藏已停用应用</string>
     <string name="app_list_info">共 %1$d 个应用 · 已停用 %2$d 个</string>
