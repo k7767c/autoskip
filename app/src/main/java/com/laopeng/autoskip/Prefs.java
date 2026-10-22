@@ -144,6 +144,15 @@ public class Prefs {
         sp.edit().remove("disabled_apps").apply();
     }
 
+    /** 是否在应用列表中隐藏已停用应用；默认关闭。 */
+    public boolean isHideDisabledApps() {
+        return sp.getBoolean("hide_disabled_apps", false);
+    }
+
+    public void setHideDisabledApps(boolean hide) {
+        sp.edit().putBoolean("hide_disabled_apps", hide).apply();
+    }
+
     // ---------------- 按规则组开关 ----------------
 
     /** 关停记录的键：{@code 包名#组名}。包名写 {@code *} 表示全局默认。 */
