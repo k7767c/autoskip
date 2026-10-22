@@ -48,8 +48,7 @@ import java.util.Set;
 class AppsPage {
 
     static final int MODE_ALL = 0;
-    static final int MODE_RULES = 1;
-    static final int MODE_OFF = 2;
+    static final int MODE_OFF = 1;
 
     /** 一行 = 一个应用。图标在后台线程就取好，避免滑动时主线程解码。 */
     static final class Row {
@@ -70,7 +69,6 @@ class AppsPage {
     private TextView tvEmpty;
     private Switch swHideDisabled;
     private Button btnAll;
-    private Button btnRules;
     private Button btnOff;
 
     private int mode = MODE_ALL;
@@ -107,7 +105,6 @@ class AppsPage {
             }
         });
         btnAll = (Button) root.findViewById(R.id.btnFilterAll);
-        btnRules = (Button) root.findViewById(R.id.btnFilterRules);
         btnOff = (Button) root.findViewById(R.id.btnFilterOff);
 
         adapter = new Adapter();
@@ -134,12 +131,6 @@ class AppsPage {
             @Override
             public void onClick(View v) {
                 setMode(MODE_ALL);
-            }
-        });
-        btnRules.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                setMode(MODE_RULES);
             }
         });
         btnOff.setOnClickListener(new View.OnClickListener() {
@@ -170,8 +161,8 @@ class AppsPage {
     }
 
     private void styleFilters() {
-        Button[] bs = {btnAll, btnRules, btnOff};
-        int[] ms = {MODE_ALL, MODE_RULES, MODE_OFF};
+        Button[] bs = {btnAll, btnOff};
+        int[] ms = {MODE_ALL, MODE_OFF};
         for (int i = 0; i < bs.length; i++) {
             boolean on = mode == ms[i];
             bs[i].setTextColor(act.getColor(on ? R.color.brand : R.color.text_sub));
@@ -275,7 +266,6 @@ class AppsPage {
         String q = query == null ? "" : query.trim().toLowerCase(Locale.ROOT);
         boolean hideDisabled = mode != MODE_OFF && Prefs.get(act).isHideDisabledApps();
         for (Row r : all) {
-            if (mode == MODE_RULES && !r.hasRules) continue;
             if (mode == MODE_OFF && !r.disabled) continue;
             if (hideDisabled && r.disabled) continue;
             if (q.length() > 0
