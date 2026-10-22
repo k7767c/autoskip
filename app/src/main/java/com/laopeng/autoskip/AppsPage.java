@@ -222,6 +222,8 @@ class AppsPage {
         for (ApplicationInfo ai : apps) {
             if (ai == null || ai.packageName == null) continue;
             if (self.equals(ai.packageName)) continue;
+            // 出厂默认不在「应用」页展示系统应用。
+            if ((ai.flags & ApplicationInfo.FLAG_SYSTEM) != 0) continue;
 
             boolean launchable;
             try {
