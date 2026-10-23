@@ -543,7 +543,7 @@ python tools/ltt_verify.py <dump目录>
 
 一份规则文件就是一个 JSON（也吃得下带注释、带尾逗号的 json5）。
 
-### 8.1 分组格式（v2，v1.7.0 起的规范格式）
+### 8.1 分组格式（v2）
 
 ```
 订阅 → 应用(RawApp) → 组(RawGroup) → 规则(RawRule)
@@ -597,46 +597,7 @@ python tools/ltt_verify.py <dump目录>
 `enable:false` 的意思是「作者认为这组不该跑」，**与用户的关停记录取「与」**：  
 作者关了就跑不了，用户关了也跑不了，但用户关不掉作者开着的东西以外的语义不受影响。
 
-### 8.2 扁平格式（兼容读入，别再手写）
-
-v1.7.0 之前落盘的就是下面这个扁平形状（`app → rules`）。解析时照旧认，读进来之后  
-立刻按规则名前缀补出组名、升成 v2 再存回去：
-
-```json
-{
-  "version": 1,
-  "apps": [
-    {
-      "id": 1,
-      "name": "某应用",
-      "packageName": "com.example.app",
-      "rules": [
-        {
-          "name": "跳过开屏广告",
-          "matchType": "any",
-          "matches": ["跳过", "Skip", "跳过广告"],
-          "excludes": ["跳过引导", "跳过教程"],
-          "activityIds": ["SplashActivity", "AdActivity"],
-          "action": "click",
-          "maxClick": 2,
-          "cooldown": 1500,
-          "delay": 0,
-          "enabled": true
-        }
-      ]
-    }
-  ]
-}
-```
-
-`looksLikeGroups()` 靠特征字段分辨两种形状：有 `rules` 就是组，有 `matches`/`match`/`activityIds`  
-就是规则本身。这样 `{"apps":[{"packageName":"x","rules":[...]}]}` 这种「组名缺失但套了 rules 壳」  
-的中间产物也不会被误判。
-
-> ⚠️ **升级是幂等的，靠 `Prefs.ruleFormat` 而不是靠嗅探内容**。早期版本用>   
-> `json.indexOf("\"groups\"")` 判断要不要升级，结果每次启动都要把几百 KB 的 JSON>   
-> 重新 parse 一遍。现在存一个 int（0=没归一化过，2=当前格式），跑一次就再也不跑。>   
-> 归一化还带**完整性校验**：应用数 / 规则数 / 通配组条数任一变了就整份放弃、原文件不动。
+当前只读取 `version: 2` 的规则文件；v1 扁平规则文件不会读取或自动迁移。应用级 `rules` 扁平结构仅用于内置规则数据。
 
 ### 应用级字段
 
@@ -644,7 +605,7 @@ v1.7.0 之前落盘的就是下面这个扁平形状（`app → rules`）。解�
 | ------------- | ------ | -------------------------------- |
 | `packageName` | string | 目标应用包名。填 `*` 表示**对所有应用生效**（通用规则） |
 | `name`        | string | 应用名，只用于显示                        |
-| `rules`       | array  | 该应用下的规则列表                        |
+| `groups`      | array  | 该应用下的规则组列表；每组包含 `name` 和 `rules` |
 
 ### 规则级字段
 

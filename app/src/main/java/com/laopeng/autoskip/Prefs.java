@@ -300,23 +300,6 @@ public class Prefs {
         sp.edit().putString("local_rules_json", v).apply();
     }
 
-    /**
-     * 规则文件的落盘格式版本，用于「只规范化一次」。
-     *
-     * <p>0 = 从没规范化过（老版本装上来的）。见
-     * {@link RuleStore#upgradeFormat()}。
-     *
-     * <p>不要改成「每次启动都解析一遍文件看看要不要升级」—— 本地层几百 KB、
-     * 几千条规则，parse 一次几百毫秒，白白拖慢启动。存个数字最省事。
-     */
-    public int getRuleFormat() {
-        return sp.getInt("rule_format", 0);
-    }
-
-    public void setRuleFormat(int v) {
-        sp.edit().putInt("rule_format", v).apply();
-    }
-
     /** 本地独占：某应用只要存在本地规则，就完全忽略它的订阅规则，避免两边同时点。 */
     public boolean isLocalExclusive() {
         return sp.getBoolean("local_exclusive", false);

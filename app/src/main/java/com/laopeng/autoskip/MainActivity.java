@@ -276,33 +276,6 @@ public class MainActivity extends Activity {
         tvFooter = (TextView) findViewById(R.id.tvFooter);
         tvFooter.setText(getString(R.string.footer, appVersionName()));
 
-        // 老版本盘上存的是扁平规则文件（app → rules），v1.7.0 起改用分组格式
-        // （app → groups → rules）。读的时候两种都认，所以升级只是为了把显式组名落盘，
-        // 升不上去也不影响功能 —— 后台做，失败静默。
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    final RuleStore.UpgradeResult ur = RuleStore.get(MainActivity.this).upgradeFormat();
-                    if (!ur.changed() || isFinishing()) return;
-                        runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            if (isFinishing()) return;
-                            refreshAll();
-                            String msg = "规则文件规范化：" + ur.apps + " 应用 / "
-                                    + ur.groups + " 组 / " + ur.rules + " 条";
-                            if (ur.dupesRemoved > 0) {
-                                msg += "（清掉组内重复规则 " + ur.dupesRemoved + " 条）";
-                            }
-                            LogStore.get(MainActivity.this).add(msg);
-                        }
-                    });
-                } catch (Throwable ignored) {
-                }
-            }
-        }, "autoskip-format-upgrade").start();
-
         // 可折叠卡片：默认只展开「后台保活」和「最近跳过记录」，其余收起 —— 首屏就能看全所有区块。
         tvKeepSummary = (TextView) findViewById(R.id.tvKeepSummary);
         tvRootSummary = (TextView) findViewById(R.id.tvRootSummary);

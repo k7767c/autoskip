@@ -19,13 +19,8 @@ import java.util.Set;
  * 全局规则是包名为 {@code *} 的那个节点，它的组对所有应用生效 ——
  * 对应 GKD 的 {@code globalGroups}。
  *
- * <p>两条兼容策略：
- * <ul>
- *   <li><b>读</b>：节点里有 {@code groups} 就按组读；只有扁平的 {@code rules} 就按
- *       {@link Category} 从规则名前缀派生组。老文件不需要任何转换就能用。</li>
- *   <li><b>写</b>：一律写成分组格式（{@code version: 2}）。第一次写会把老的扁平
- *       文件就地升级成分组格式，规则内容不变。</li>
- * </ul>
+ * <p>只接受 {@code version: 2}。v1 扁平格式不再解析或迁移；当前生成的内置规则仍使用
+ * v2 应用级 {@code rules} 数组，订阅和导出使用显式 {@code groups}。
  */
 public class RuleSet {
 
@@ -267,22 +262,16 @@ public class RuleSet {
 
     // ---------------- 解析 ----------------
 
-    /** 解析一份规则文件。支持 {"apps":[...]}、{"groups":[...]} 与 [{...}] 三种顶层写法。 */
+    /** 解析 v2 规则文件；v1 文件不再解析。 */
     public static RuleSet parse(String rawJson) {
         RuleSet set = new RuleSet();
         if (rawJson == null || rawJson.trim().length() == 0) return set;
         String clean = JsonUtil.stripJson5(rawJson);
         JSONArray arr = null;
         try {
-            String t = clean.trim();
-            if (t.startsWith("[")) {
-                arr = new JSONArray(t);
-            } else {
-                JSONObject root = new JSONObject(t);
-                arr = root.optJSONArray("apps");
-                if (arr == null) arr = root.optJSONArray("groups");
-                if (arr == null) arr = root.optJSONArray("rules");
-            }
+            JSONObject root = new JSONObject(clean.trim());
+            if (root.optInt("version", -1) != FORMAT_VERSION) return set;
+            arr = root.optJSONArray("apps");
         } catch (Exception e) {
             return set;
         }
@@ -294,12 +283,11 @@ public class RuleSet {
             AppGroup g = new AppGroup();
             g.id = o.optInt("id", i);
             g.name = o.optString("name", "");
-            g.packageName = o.optString("packageName", o.optString("app", o.optString("package", "")));
+            g.packageName = o.optString("packageName", "");
             if (g.packageName.length() == 0) continue;
 
             JSONArray gs = o.optJSONArray("groups");
             if (looksLikeGroups(gs)) {
-                // 显式分组（GKD 原生格式）：组名原样保留
                 for (int j = 0; j < gs.length(); j++) {
                     JSONObject go = gs.optJSONObject(j);
                     if (go == null) continue;
@@ -309,9 +297,8 @@ public class RuleSet {
                 }
                 g.sortGroups();
             } else {
-                // 扁平格式：按规则名的类别前缀派生组
+                // 当前 v2 内置规则仍以 app.rules 供生成器维护；只支持带 version:2 的文件。
                 JSONArray rs = o.optJSONArray("rules");
-                if (rs == null) rs = gs;   // 老代码把应用级 groups 当规则数组用
                 if (rs != null) {
                     for (int j = 0; j < rs.length(); j++) {
                         JSONObject ro = rs.optJSONObject(j);
@@ -328,13 +315,7 @@ public class RuleSet {
         return set;
     }
 
-    /**
-     * 判断应用节点下的 {@code groups} 数组装的是「组对象」还是「规则对象」。
-     *
-     * <p>靠特征字段区分：组对象一定带 {@code rules} 数组；规则对象带
-     * {@code matches} / {@code match} / {@code activityIds}。两者都不像时按「组」处理
-     * （宁可少读几条，也不要把组当规则读成空规则）。
-     */
+    /** 判断 v2 节点里的 groups 数组是否由显式规则组组成。 */
     private static boolean looksLikeGroups(JSONArray gs) {
         if (gs == null || gs.length() == 0) return false;
         for (int i = 0; i < gs.length(); i++) {
@@ -429,7 +410,7 @@ public class RuleSet {
 
     // ---------------- 序列化 ----------------
 
-    /** 当前落盘格式版本。1 = 扁平（只读兼容），2 = 分组。 */
+    /** 当前且唯一支持的落盘格式版本。 */
     public static final int FORMAT_VERSION = 2;
 
     private static JSONArray toArray(List<String> list) {
