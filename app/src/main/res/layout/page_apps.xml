@@ -68,14 +68,6 @@
             android:text="@string/filter_all" />
 
         <Button
-            android:id="@+id/btnFilterRules"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginLeft="8dp"
-            android:layout_weight="1"
-            android:text="@string/filter_rules" />
-
-        <Button
             android:id="@+id/btnFilterOff"
             android:layout_width="0dp"
             android:layout_height="wrap_content"

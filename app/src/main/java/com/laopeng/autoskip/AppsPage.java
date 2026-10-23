@@ -48,8 +48,7 @@ import java.util.Set;
 class AppsPage {
 
     static final int MODE_ALL = 0;
-    static final int MODE_RULES = 1;
-    static final int MODE_OFF = 2;
+    static final int MODE_OFF = 1;
 
     /** 一行 = 一个应用。图标在后台线程就取好，避免滑动时主线程解码。 */
     static final class Row {
@@ -69,7 +68,6 @@ class AppsPage {
     private TextView tvInfo;
     private TextView tvEmpty;
     private Button btnAll;
-    private Button btnRules;
     private Button btnOff;
 
     // 默认只显示已启用应用；“已停用”筛选仍可单独查看被关闭的应用。
@@ -98,7 +96,6 @@ class AppsPage {
         tvEmpty = (TextView) root.findViewById(R.id.tvAppListEmpty);
         EditText etSearch = (EditText) root.findViewById(R.id.etSearch);
         btnAll = (Button) root.findViewById(R.id.btnFilterAll);
-        btnRules = (Button) root.findViewById(R.id.btnFilterRules);
         btnOff = (Button) root.findViewById(R.id.btnFilterOff);
 
         adapter = new Adapter();
@@ -125,12 +122,6 @@ class AppsPage {
             @Override
             public void onClick(View v) {
                 setMode(MODE_ALL);
-            }
-        });
-        btnRules.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                setMode(MODE_RULES);
             }
         });
         btnOff.setOnClickListener(new View.OnClickListener() {
@@ -161,8 +152,8 @@ class AppsPage {
     }
 
     private void styleFilters() {
-        Button[] bs = {btnAll, btnRules, btnOff};
-        int[] ms = {MODE_ALL, MODE_RULES, MODE_OFF};
+        Button[] bs = {btnAll, btnOff};
+        int[] ms = {MODE_ALL, MODE_OFF};
         for (int i = 0; i < bs.length; i++) {
             boolean on = mode == ms[i];
             bs[i].setTextColor(act.getColor(on ? R.color.brand : R.color.text_sub));
@@ -270,7 +261,6 @@ class AppsPage {
         String q = query == null ? "" : query.trim().toLowerCase(Locale.ROOT);
         for (Row r : all) {
             if (mode == MODE_ALL && r.disabled) continue;
-            if (mode == MODE_RULES && !r.hasRules) continue;
             if (mode == MODE_OFF && !r.disabled) continue;
             if (q.length() > 0
                     && !r.label.toLowerCase(Locale.ROOT).contains(q)

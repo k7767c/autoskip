@@ -806,7 +806,7 @@ public class MainActivity extends Activity {
         int base = (idx == PAGE_APPS) ? R.string.tab_apps : R.string.tab_rules;
         lb.setText(n > 0 ? getString(R.string.tab_badge, getString(base), n) : getString(base));
         if (n <= 0) return;   // 没角标时颜色归 showPage 的选中态逻辑管，别在这里覆盖
-        int c = getColor(page == idx ? R.color.brand : R.color.warn);
+        int c = getColor(page == idx ? R.color.brand : R.color.text_main);
         lb.setTextColor(c);
         ic.setTextColor(c);
     }
