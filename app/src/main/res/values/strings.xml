@@ -57,12 +57,12 @@
     <string name="toast_guard_off">守护模块已移除，内存锁也解除了</string>
 
     <string name="sec_sub">规则订阅</string>
-    <string name="hint_url">粘贴规则订阅地址，例如 https://…/rules.json</string>
-    <string name="btn_add_sub">添加订阅</string>
-    <string name="btn_update">更新全部规则</string>
+    <string name="hint_url">粘贴 GKD 在线订阅 JSON5 地址</string>
+    <string name="btn_add_sub">添加 GKD 订阅</string>
+    <string name="btn_update">更新 GKD 订阅</string>
     <string name="btn_builtin">恢复出厂内置规则</string>
-    <string name="sub_empty">暂无订阅地址。不填也能用出厂内置规则。</string>
-    <string name="sub_tip">长按订阅地址可删除</string>
+    <string name="sub_empty">暂无 GKD 订阅。不添加也能用出厂内置规则。</string>
+    <string name="sub_tip">转换在本机完成；结构定位类规则不支持时会跳过。长按地址可删除。</string>
 
     <string name="sec_log">最近跳过记录</string>
     <string name="btn_clear_log">清空记录</string>
@@ -173,9 +173,9 @@
     <string name="group_file_off_tag">上游停用</string>
     <string name="sum_global_groups">%1$d 组 · %2$d 条 · 全局</string>
     <string name="sum_active_groups">%1$d 组 · %2$d 条</string>
-    <string name="sum_off_groups">已关停 %1$d 组</string>
-    <string name="btn_reset_groups">全部恢复为启用</string>
-    <string name="dlg_reset_groups">把这个应用关掉的规则组全部恢复为启用？</string>
+    <string name="sum_off_groups">手动调整 %1$d 组</string>
+    <string name="btn_reset_groups">恢复规则默认状态</string>
+    <string name="dlg_reset_groups">清除手动启停设置，并恢复订阅默认状态？</string>
     <string name="toast_groups_reset">已恢复</string>
     <!-- 底部导航角标：有东西被关停时把数字缀在标签后面 -->
     <string name="tab_badge">%1$s %2$d</string>

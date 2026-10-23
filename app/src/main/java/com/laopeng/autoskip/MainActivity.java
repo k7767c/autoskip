@@ -342,11 +342,12 @@ public class MainActivity extends Activity {
             @Override
             public void onClick(View v) {
                 confirm(getString(R.string.btn_reset_groups),
-                        "把被你关掉的全局规则组全部恢复为启用？\n这些组对所有应用生效，「恢复」之后所有应用都会重新跑它们的规则。",
+                        "清除全局规则组的手动启停设置，恢复订阅默认状态？\n全局规则会影响所有应用。",
                         new Runnable() {
                             @Override
                             public void run() {
                                 Prefs.get(MainActivity.this).clearDisabledGroups("*");
+                                Prefs.get(MainActivity.this).clearEnabledGroups("*");
                                 refreshGlobalGroups();
                                 toast(getString(R.string.toast_groups_reset));
                             }
@@ -795,7 +796,7 @@ public class MainActivity extends Activity {
         if (tabLabels == null) return;
         Prefs p = Prefs.get(this);
         setTabBadge(PAGE_APPS, p.disabledAppCount());
-        setTabBadge(PAGE_RULES, p.disabledGroupCount());
+        setTabBadge(PAGE_RULES, p.groupOverrideCount());
     }
 
     private void setTabBadge(int idx, int n) {
@@ -840,7 +841,7 @@ public class MainActivity extends Activity {
             }
         });
 
-        int off = GroupRows.userOffCount(gs);
+        int off = GroupRows.userOverrideCount(gs);
         tvGlobalSummary.setText(off > 0
                 ? getString(R.string.sum_off_groups, off)
                 : getString(R.string.sum_global_groups, gs.size(), GroupRows.ruleSum(gs)));
@@ -855,7 +856,7 @@ public class MainActivity extends Activity {
         int rr = rs.remoteRuleCount();
         String sub;
         if (!p.getSubUrls().isEmpty()) {
-            sub = p.getSubUrls().size() + " 个订阅地址";
+            sub = p.getSubUrls().size() + " 个 GKD 订阅地址";
         } else if (rr > 0) {
             // 订阅层里有东西、但没有订阅地址 —— 是外部导入/刷入的规则集。
             // 不区分会让界面显示"使用内置规则"，用户误点「恢复出厂内置规则」就把规则清没了。
@@ -1514,7 +1515,7 @@ public class MainActivity extends Activity {
     private void addSub() {
         String url = etUrl.getText().toString().trim();
         if (url.length() == 0) {
-            toast("请先粘贴规则订阅地址");
+            toast("请先粘贴 GKD 在线订阅 JSON5 地址");
             return;
         }
         if (!url.startsWith("http://") && !url.startsWith("https://")) {
@@ -1531,13 +1532,13 @@ public class MainActivity extends Activity {
         etUrl.setText("");
         refreshSubs();
         refreshRules();
-        toast("已添加，点「更新全部规则」开始拉取");
+        toast("已添加 GKD 订阅，点「更新 GKD 订阅」开始拉取");
     }
 
     private void updateRules() {
         final List<String> urls = Prefs.get(this).getSubUrls();
         if (urls.isEmpty()) {
-            toast("先添加一个订阅地址");
+            toast("先添加一个 GKD 在线订阅地址");
             return;
         }
         btnUpdate.setEnabled(false);

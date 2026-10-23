@@ -166,6 +166,13 @@ public class Prefs {
         return new java.util.HashSet<>(s);
     }
 
+    /** 用户明确启用的规则组；用于覆盖订阅文件中的 enable:false。 */
+    public java.util.Set<String> getEnabledGroups() {
+        java.util.Set<String> s = sp.getStringSet("enabled_groups", null);
+        if (s == null || s.isEmpty()) return new java.util.HashSet<>();
+        return new java.util.HashSet<>(s);
+    }
+
     /** 该组对该应用是否被关停（应用级或全局默认任一命中即算关）。 */
     public boolean isGroupDisabled(String pkg, String group) {
         if (group == null || group.length() == 0) return false;
@@ -178,6 +185,11 @@ public class Prefs {
     public boolean isGroupDisabledExact(String pkg, String group) {
         if (group == null || group.length() == 0) return false;
         return getDisabledGroups().contains(groupKey(pkg, group));
+    }
+
+    public boolean isGroupEnabledExact(String pkg, String group) {
+        if (group == null || group.length() == 0) return false;
+        return getEnabledGroups().contains(groupKey(pkg, group));
     }
 
     public void setGroupDisabled(String pkg, String group, boolean disabled) {
@@ -196,8 +208,19 @@ public class Prefs {
         }
     }
 
-    public int disabledGroupCount() {
-        return getDisabledGroups().size();
+    public void setGroupEnabled(String pkg, String group, boolean enabled) {
+        if (group == null || group.length() == 0) return;
+        java.util.Set<String> s = getEnabledGroups();
+        String k = groupKey(pkg, group);
+        if (enabled) s.add(k); else s.remove(k);
+        if (s.isEmpty()) sp.edit().remove("enabled_groups").apply();
+        else sp.edit().putStringSet("enabled_groups", s).apply();
+    }
+
+    public int groupOverrideCount() {
+        java.util.Set<String> all = getDisabledGroups();
+        all.addAll(getEnabledGroups());
+        return all.size();
     }
 
     /** 清掉某个包名的全部组停用记录（包名写 "*" 只清全局默认那几条）。 */
@@ -215,8 +238,21 @@ public class Prefs {
         }
     }
 
+    public void clearEnabledGroups(String pkg) {
+        String prefix = (pkg == null || pkg.length() == 0 ? "*" : pkg) + "#";
+        java.util.Set<String> s = getEnabledGroups();
+        java.util.Set<String> keep = new java.util.HashSet<>();
+        for (String k : s) if (!k.startsWith(prefix)) keep.add(k);
+        if (keep.isEmpty()) sp.edit().remove("enabled_groups").apply();
+        else sp.edit().putStringSet("enabled_groups", keep).apply();
+    }
+
     public void clearAllDisabledGroups() {
         sp.edit().remove("disabled_groups").apply();
+    }
+
+    public void clearAllGroupOverrides() {
+        sp.edit().remove("disabled_groups").remove("enabled_groups").apply();
     }
 
     // ---------------- 自动识别（规则库外的应用） ----------------

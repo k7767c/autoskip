@@ -132,18 +132,19 @@ public class AppRuleActivity extends Activity {
             GroupRows.render(this, llGlobalGroups, glob, pkg, onSwitch);
         }
 
-        btnResetGroups.setVisibility(GroupRows.userOffCount(all) > 0 ? View.VISIBLE : View.GONE);
+        btnResetGroups.setVisibility(GroupRows.userOverrideCount(all) > 0 ? View.VISIBLE : View.GONE);
     }
 
     private void confirmReset() {
         new AlertDialog.Builder(this)
                 .setTitle(R.string.btn_reset_groups)
-                .setMessage(R.string.dlg_reset_groups)
+                .setMessage("清除这个应用的手动启停设置，并恢复订阅默认状态？")
                 .setNegativeButton(android.R.string.cancel, null)
                 .setPositiveButton(R.string.btn_reset_ok, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface d, int w) {
                         Prefs.get(AppRuleActivity.this).clearDisabledGroups(pkg);
+                        Prefs.get(AppRuleActivity.this).clearEnabledGroups(pkg);
                         reload();
                         toast(getString(R.string.toast_groups_reset));
                     }

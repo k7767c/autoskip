@@ -27,7 +27,7 @@
           "name": "跳过按钮-无文字图标",
           "matchType": "id",
           "regex": true,
-          "matches": ["/ms_skipView$", "/ms_skipView_container$"],
+          "matches": ["/ms_skipView$", "/ms_skipView_container$", "/tt_splash_skip_btn$"],
           "action": "click",
           "maxClick": 3,
           "cooldown": 800

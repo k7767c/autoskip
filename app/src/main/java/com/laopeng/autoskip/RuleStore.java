@@ -106,42 +106,44 @@ public class RuleStore {
      */
     public List<Rule> rulesFor(String pkg) {
         Set<String> off = prefs.getDisabledGroups();
+        Set<String> on = prefs.getEnabledGroups();
         List<Rule> out = new ArrayList<>();
         if (!prefs.isLocalExclusive()) {
-            addRules(out, local(), pkg, off);
-            addRules(out, builtin(), pkg, off);
-            addRules(out, remote(), pkg, off);
+            addRules(out, local(), pkg, off, on);
+            addRules(out, builtin(), pkg, off, on);
+            addRules(out, remote(), pkg, off, on);
             return out;
         }
         RuleSet l = local();
         RuleSet.AppGroup localExact = l.findGroup(pkg);
-        addRules(out, builtin(), pkg, off);
-        addRules(out, l, pkg, off);
+        addRules(out, builtin(), pkg, off, on);
+        addRules(out, l, pkg, off, on);
         if (localExact != null) return out;
-        addRules(out, remote(), pkg, off);
+        addRules(out, remote(), pkg, off, on);
         return out;
     }
 
     /**
      * 把某一层里适用于 {@code pkg} 的规则追加进 out，<b>跳过被关停的组</b>。
      *
-     * <p>「关停」有两个来源，取「与」：规则文件里把组写成 {@code enable:false}
-     * （订阅作者的意思），以及用户自己的关停记录（{@link Prefs#getDisabledGroups()}，
-     * 键是 {@code 包名#组名}，包名位写 {@code *} 表示全局默认）。
+     * <p>订阅里的组默认开关（含 GKD 的按应用覆盖）与用户手动启停记录共同决定该组状态；
+     * 用户明确启用可以覆盖订阅默认关闭，手动关闭仍优先。
      *
      * <p>{@code off} 由调用方传进来而不是每次现取 —— SharedPreferences 的
      * getStringSet 要拷一份 HashSet，而这里一趟要查十几个组。
      */
-    private void addRules(List<Rule> out, RuleSet set, String pkg, Set<String> off) {
+    private void addRules(List<Rule> out, RuleSet set, String pkg, Set<String> off, Set<String> on) {
         RuleSet.AppGroup exact = set.findGroup(pkg);
-        if (exact != null) appendGroups(out, exact, pkg, off);
+        if (exact != null) appendGroups(out, exact, pkg, off, on);
         RuleSet.AppGroup any = set.globalNode();
-        if (any != null && any != exact) appendGroups(out, any, pkg, off);
+        if (any != null && any != exact) appendGroups(out, any, pkg, off, on);
     }
 
-    private void appendGroups(List<Rule> out, RuleSet.AppGroup node, String pkg, Set<String> off) {
+    private void appendGroups(List<Rule> out, RuleSet.AppGroup node, String pkg, Set<String> off, Set<String> on) {
         for (RuleGroup g : node.groups) {
-            if (!g.enable) continue;
+            boolean userEnabled = on.contains(Prefs.groupKey(pkg, g.name))
+                    || on.contains(Prefs.groupKey("*", g.name));
+            if (!g.enabledFor(pkg) && !userEnabled) continue;
             if (!off.isEmpty()
                     && (off.contains(Prefs.groupKey(pkg, g.name))
                     || off.contains(Prefs.groupKey("*", g.name)))) {
@@ -258,6 +260,8 @@ public class RuleStore {
         public boolean fileEnabled = true;
         /** 用户自己关的（精确到该应用，不含全局默认）。 */
         public boolean userDisabled;
+        /** 用户自己启用的（用于覆盖订阅文件里的 enable:false）。 */
+        public boolean userEnabled;
         /** 被全局默认（键 {@code *#组名}）关掉的。 */
         public boolean globalOff;
 
@@ -271,7 +275,7 @@ public class RuleStore {
 
         /** 最终是否生效 —— 与 {@link #rulesFor(String)} 的过滤口径保持一致。 */
         public boolean isOn() {
-            return fileEnabled && !userDisabled && !globalOff;
+            return (fileEnabled || userEnabled) && !userDisabled && !globalOff;
         }
     }
 
@@ -282,16 +286,18 @@ public class RuleStore {
      */
     public synchronized List<GroupView> groupsFor(String pkg) {
         Map<String, GroupView> map = new LinkedHashMap<>();
-        collect(map, local(), pkg, false, "本地");
-        collect(map, builtin(), pkg, false, "出厂");
-        collect(map, remote(), pkg, false, "订阅");
-        collect(map, local(), "*", true, "本地");
-        collect(map, builtin(), "*", true, "出厂");
-        collect(map, remote(), "*", true, "订阅");
+        collect(map, local(), pkg, false, "本地", pkg);
+        collect(map, builtin(), pkg, false, "出厂", pkg);
+        collect(map, remote(), pkg, false, "订阅", pkg);
+        collect(map, local(), "*", true, "本地", pkg);
+        collect(map, builtin(), "*", true, "出厂", pkg);
+        collect(map, remote(), "*", true, "订阅", pkg);
 
         List<GroupView> out = sort(map);
         for (GroupView v : out) {
             v.userDisabled = prefs.isGroupDisabledExact(pkg, v.name);
+            v.userEnabled = prefs.isGroupEnabledExact(pkg, v.name)
+                    || prefs.isGroupEnabledExact("*", v.name);
             v.globalOff = prefs.isGroupDisabled("*", v.name);
         }
         return out;
@@ -305,20 +311,21 @@ public class RuleStore {
      */
     public synchronized List<GroupView> globalGroups() {
         Map<String, GroupView> map = new LinkedHashMap<>();
-        collect(map, local(), "*", true, "本地");
-        collect(map, builtin(), "*", true, "出厂");
-        collect(map, remote(), "*", true, "订阅");
+        collect(map, local(), "*", true, "本地", "*");
+        collect(map, builtin(), "*", true, "出厂", "*");
+        collect(map, remote(), "*", true, "订阅", "*");
 
         List<GroupView> out = sort(map);
         for (GroupView v : out) {
             v.userDisabled = prefs.isGroupDisabledExact("*", v.name);
+            v.userEnabled = prefs.isGroupEnabledExact("*", v.name);
             v.globalOff = false;
         }
         return out;
     }
 
     private void collect(Map<String, GroupView> map, RuleSet set, String nodePkg,
-                         boolean global, String source) {
+                         boolean global, String source, String targetPkg) {
         RuleSet.AppGroup node = set.findGroup(nodePkg);
         if (node == null) return;
         for (RuleGroup g : node.groups) {
@@ -329,7 +336,7 @@ public class RuleStore {
                 map.put(g.name, v);
             }
             v.ruleCount += g.rules.size();
-            if (!g.enable) v.fileEnabled = false;
+            if (!g.enabledFor(targetPkg)) v.fileEnabled = false;
             if (global) {
                 v.inGlobal = true;
             } else {
@@ -597,7 +604,7 @@ public class RuleStore {
 
     // ---------------- 订阅层更新 ----------------
 
-    /** 后台线程拉取所有订阅地址并合并覆盖订阅层。本地规则不受影响。 */
+    /** 后台线程拉取 GKD JSON5 订阅、在本机转换并覆盖订阅层。本地规则不受影响。 */
     public void update(final List<String> urls, final Callback cb) {
         new Thread(new Runnable() {
             @Override
@@ -608,7 +615,7 @@ public class RuleStore {
                     for (String u : urls) {
                         try {
                             String body = httpGet(u);
-                            RuleSet s = RuleSet.parse(body);
+                            RuleSet s = GkdSubscriptionConverter.convert(body);
                             if (s.apps.isEmpty() || s.ruleCount() == 0) {
                                 errors.add(shortUrl(u) + " 未解析出规则");
                             } else {
@@ -669,7 +676,11 @@ public class RuleStore {
             BufferedReader br = new BufferedReader(new InputStreamReader(in, "UTF-8"));
             StringBuilder sb = new StringBuilder();
             String line;
-            while ((line = br.readLine()) != null) sb.append(line).append('\n');
+            while ((line = br.readLine()) != null) {
+                if (sb.length() + line.length() > 10 * 1024 * 1024)
+                    throw new Exception("订阅超过 10 MiB，已停止下载");
+                sb.append(line).append('\n');
+            }
             br.close();
             return sb.toString();
         } finally {

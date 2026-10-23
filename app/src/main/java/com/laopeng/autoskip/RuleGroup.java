@@ -4,7 +4,9 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 规则组 —— 快跳的三层结构里「应用」与「规则」之间的那一层，对应 GKD 的 RawGroup。
@@ -39,6 +41,8 @@ public class RuleGroup {
     public boolean enable = true;
 
     public final List<Rule> rules = new ArrayList<>();
+    /** Per-app default overrides used by GKD global groups. */
+    public final Map<String, Boolean> appEnableOverrides = new LinkedHashMap<>();
 
     public RuleGroup() {
     }
@@ -54,7 +58,13 @@ public class RuleGroup {
         g.desc = desc;
         g.enable = enable;
         g.rules.addAll(rules);
+        g.appEnableOverrides.putAll(appEnableOverrides);
         return g;
+    }
+
+    public boolean enabledFor(String packageName) {
+        Boolean override = appEnableOverrides.get(packageName);
+        return override == null ? enable : override;
     }
 
     public int ruleCount() {
@@ -87,6 +97,16 @@ public class RuleGroup {
                 g.rules.add(r);
             }
         }
+        JSONArray appOverrides = o.optJSONArray("apps");
+        if (appOverrides != null) {
+            for (int i = 0; i < appOverrides.length(); i++) {
+                JSONObject app = appOverrides.optJSONObject(i);
+                if (app == null) continue;
+                String pkg = app.optString("id", "");
+                if (pkg.length() > 0 && app.has("enable"))
+                    g.appEnableOverrides.put(pkg, app.optBoolean("enable", true));
+            }
+        }
         return g;
     }
 
@@ -97,6 +117,16 @@ public class RuleGroup {
             o.put("name", name);
             if (desc != null && desc.length() > 0) o.put("desc", desc);
             o.put("enable", enable);
+            if (!appEnableOverrides.isEmpty()) {
+                JSONArray overrides = new JSONArray();
+                for (Map.Entry<String, Boolean> entry : appEnableOverrides.entrySet()) {
+                    JSONObject app = new JSONObject();
+                    app.put("id", entry.getKey());
+                    app.put("enable", entry.getValue());
+                    overrides.put(app);
+                }
+                o.put("apps", overrides);
+            }
             JSONArray rs = new JSONArray();
             for (Rule r : rules) rs.put(RuleSet.ruleToJson(r));
             o.put("rules", rs);

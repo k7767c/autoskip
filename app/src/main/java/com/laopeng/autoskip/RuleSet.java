@@ -252,8 +252,10 @@ public class RuleSet {
             }
             if (!dedup) {
                 dg.rules.addAll(sg.rules);
+                dg.appEnableOverrides.putAll(sg.appEnableOverrides);
                 continue;
             }
+            dg.appEnableOverrides.putAll(sg.appEnableOverrides);
             Set<String> seen = new HashSet<>();
             for (Rule r : dg.rules) seen.add(signature(r));
             for (Rule r : sg.rules) {

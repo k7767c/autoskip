@@ -60,6 +60,9 @@ final class GroupRows {
             } else if (v.globalOff) {
                 tagText = act.getString(R.string.group_global_off_tag);
                 tagColor = R.color.warn;
+            } else if (v.userEnabled && !v.fileEnabled) {
+                tagText = "手动启用";
+                tagColor = R.color.brand;
             } else if (!v.fileEnabled) {
                 tagText = act.getString(R.string.group_file_off_tag);
                 tagColor = R.color.warn;
@@ -72,9 +75,8 @@ final class GroupRows {
             sub.setText(act.getString(R.string.group_sub, v.ruleCount, v.sources));
             name.setTextColor(act.getColor(v.isOn() ? R.color.text_main : R.color.text_sub));
 
-            // 上游 enable:false、或已经被全局默认关掉的组，这一层的开关点了也不会生效
-            // —— 置灰而不是藏起来，让用户看得见「这里有一组规则，但不是在这一层管的」。
-            boolean editable = v.fileEnabled && !v.globalOff;
+            // 用户可覆盖订阅中的 enable:false；应用页仍不能越过全局默认关闭。
+            boolean editable = !v.globalOff;
             sw.setEnabled(editable);
             sw.setAlpha(editable ? 1f : 0.45f);
             // 先摘监听器再回填，否则程序化 setChecked 会被当成用户操作（老坑，AppListActivity 那版踩过）
@@ -84,6 +86,7 @@ final class GroupRows {
                 @Override
                 public void onCheckedChanged(CompoundButton b, boolean checked) {
                     Prefs.get(act).setGroupDisabled(pkg, v.name, !checked);
+                    Prefs.get(act).setGroupEnabled(pkg, v.name, checked && !v.fileEnabled);
                     if (cb != null) cb.onChanged();
                 }
             });
@@ -107,11 +110,11 @@ final class GroupRows {
         return n;
     }
 
-    /** 这些组里被用户自己关掉的有几组（用于决定「全部恢复」按钮露不露）。 */
-    static int userOffCount(List<RuleStore.GroupView> views) {
+    /** 有用户启停覆盖的组数（用于决定「恢复默认」按钮露不露）。 */
+    static int userOverrideCount(List<RuleStore.GroupView> views) {
         int n = 0;
         for (RuleStore.GroupView v : views) {
-            if (v.userDisabled) n++;
+            if (v.userDisabled || v.userEnabled) n++;
         }
         return n;
     }

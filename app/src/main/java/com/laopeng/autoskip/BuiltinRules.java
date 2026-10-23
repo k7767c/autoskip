@@ -63,7 +63,8 @@ public class BuiltinRules {
         "          \"regex\": true,\n" +
         "          \"matches\": [\n" +
         "            \"/ms_skipView$\",\n" +
-        "            \"/ms_skipView_container$\"\n" +
+        "            \"/ms_skipView_container$\",\n" +
+        "            \"/tt_splash_skip_btn$\"\n" +
         "          ],\n" +
         "          \"action\": \"click\",\n" +
         "          \"maxClick\": 3,\n" +
