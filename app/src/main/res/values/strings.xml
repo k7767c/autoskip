@@ -94,16 +94,13 @@
     <string name="title_app_list">应用规则开关</string>
     <string name="btn_back">‹ 返回</string>
     <string name="hint_search_app">搜索应用名 / 包名</string>
-    <string name="filter_all">全部</string>
+    <string name="filter_all">已启用</string>
     <string name="filter_rules">有规则</string>
     <string name="filter_off">已停用</string>
     <string name="app_list_info">共 %1$d 个应用 · 已停用 %2$d 个</string>
     <string name="app_list_loading">正在读取应用列表…</string>
     <string name="app_list_empty">没有匹配的应用</string>
-    <string name="btn_reset_apps">全部恢复为启用</string>
     <string name="btn_reset_ok">恢复</string>
-    <string name="dlg_reset_apps">把所有应用都恢复为「由快跳接管」？之前单独关掉的那些会重新生效。</string>
-    <string name="toast_apps_reset">已全部恢复启用</string>
     <string name="toast_app_off">已停用快跳对「%1$s」的接管</string>
     <string name="toast_app_on">已恢复快跳对「%1$s」的接管</string>
     <string name="app_rules_n">%1$d 条规则（含全局）</string>

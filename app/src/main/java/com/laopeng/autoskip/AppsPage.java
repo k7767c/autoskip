@@ -1,8 +1,6 @@
 package com.laopeng.autoskip;
 
 import android.app.Activity;
-import android.app.AlertDialog;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
@@ -70,11 +68,11 @@ class AppsPage {
     private Adapter adapter;
     private TextView tvInfo;
     private TextView tvEmpty;
-    private Button btnReset;
     private Button btnAll;
     private Button btnRules;
     private Button btnOff;
 
+    // 默认只显示已启用应用；“已停用”筛选仍可单独查看被关闭的应用。
     private int mode = MODE_ALL;
     private String query = "";
     /**
@@ -99,7 +97,6 @@ class AppsPage {
         tvInfo = (TextView) root.findViewById(R.id.tvAppListInfo);
         tvEmpty = (TextView) root.findViewById(R.id.tvAppListEmpty);
         EditText etSearch = (EditText) root.findViewById(R.id.etSearch);
-        btnReset = (Button) root.findViewById(R.id.btnResetApps);
         btnAll = (Button) root.findViewById(R.id.btnFilterAll);
         btnRules = (Button) root.findViewById(R.id.btnFilterRules);
         btnOff = (Button) root.findViewById(R.id.btnFilterOff);
@@ -140,13 +137,6 @@ class AppsPage {
             @Override
             public void onClick(View v) {
                 setMode(MODE_OFF);
-            }
-        });
-
-        btnReset.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                confirmReset();
             }
         });
 
@@ -222,6 +212,8 @@ class AppsPage {
         for (ApplicationInfo ai : apps) {
             if (ai == null || ai.packageName == null) continue;
             if (self.equals(ai.packageName)) continue;
+            // 隐藏 ColorOS 系统应用，避免它们出现在可管理的应用列表中。
+            if (ai.packageName.startsWith("com.coloros.")) continue;
             // 出厂默认不在「应用」页展示系统应用。
             if ((ai.flags & ApplicationInfo.FLAG_SYSTEM) != 0) continue;
 
@@ -277,6 +269,7 @@ class AppsPage {
         shown.clear();
         String q = query == null ? "" : query.trim().toLowerCase(Locale.ROOT);
         for (Row r : all) {
+            if (mode == MODE_ALL && r.disabled) continue;
             if (mode == MODE_RULES && !r.hasRules) continue;
             if (mode == MODE_OFF && !r.disabled) continue;
             if (q.length() > 0
@@ -289,7 +282,6 @@ class AppsPage {
         int off = Prefs.get(act).disabledAppCount();
         tvInfo.setText(act.getString(R.string.app_list_info, all.size(), off));
         tvEmpty.setVisibility((!loading && shown.isEmpty()) ? View.VISIBLE : View.GONE);
-        btnReset.setVisibility(off > 0 ? View.VISIBLE : View.GONE);
     }
 
     private void setDisabled(Row r, boolean disabled) {
@@ -298,23 +290,6 @@ class AppsPage {
         Prefs.get(act).setAppDisabled(r.pkg, disabled);
         toast(act.getString(disabled ? R.string.toast_app_off : R.string.toast_app_on, r.label));
         applyFilter();
-    }
-
-    private void confirmReset() {
-        new AlertDialog.Builder(act)
-                .setTitle(R.string.btn_reset_apps)
-                .setMessage(R.string.dlg_reset_apps)
-                .setNegativeButton(android.R.string.cancel, null)
-                .setPositiveButton(R.string.btn_reset_ok, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface d, int w) {
-                        Prefs.get(act).clearDisabledApps();
-                        for (Row r : all) r.disabled = false;
-                        applyFilter();
-                        toast(act.getString(R.string.toast_apps_reset));
-                    }
-                })
-                .show();
     }
 
     private void openDetail(Row r) {

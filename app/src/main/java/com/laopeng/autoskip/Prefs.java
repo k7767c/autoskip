@@ -140,10 +140,6 @@ public class Prefs {
         return getDisabledApps().size();
     }
 
-    public void clearDisabledApps() {
-        sp.edit().remove("disabled_apps").apply();
-    }
-
     // ---------------- 按规则组开关 ----------------
 
     /** 关停记录的键：{@code 包名#组名}。包名写 {@code *} 表示全局默认。 */
