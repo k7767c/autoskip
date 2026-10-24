@@ -65,6 +65,7 @@ public class MainActivity extends Activity {
     private Button btnAppDetail;
     private Button btnCopyCmd;
     private Switch swKeepAlive;
+    private Switch swHideFromRecents;
     private TextView tvKeepState;
     private Button btnBattery;
     private TextView tvFooter;
@@ -266,6 +267,7 @@ public class MainActivity extends Activity {
         swLocalExclusive = (Switch) findViewById(R.id.swLocalExclusive);
 
         swKeepAlive = (Switch) findViewById(R.id.swKeepAlive);
+        swHideFromRecents = (Switch) findViewById(R.id.swHideFromRecents);
         tvKeepState = (TextView) findViewById(R.id.tvKeepState);
         btnBattery = (Button) findViewById(R.id.btnBattery);
 
@@ -373,27 +375,24 @@ public class MainActivity extends Activity {
             }
         });
 
+        swHideFromRecents.setOnCheckedChangeListener((button, checked) -> {
+            if (loadingPrefs) return;
+            if (RecentTasks.apply(MainActivity.this, checked)) {
+                Prefs.get(MainActivity.this).setHideFromRecents(checked);
+            } else {
+                RecentTasks.apply(MainActivity.this, !checked);
+                loadingPrefs = true;
+                swHideFromRecents.setChecked(!checked);
+                loadingPrefs = false;
+                toast(getString(R.string.hide_recents_failed));
+            }
+        });
+
         btnBattery.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 KeepAlive.requestBatteryWhitelist(MainActivity.this);
                 toast("在弹窗里选「允许」，再回来这里看状态");
-            }
-        });
-
-        ((Button) findViewById(R.id.btnAutoStart)).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                boolean ok = KeepAlive.openAutoStart(MainActivity.this, getString(R.string.app_name));
-                toast(ok ? "找到「快跳」并允许自启动 / 设为「无限制」"
-                        : "你的系统没有公开的自启动设置页，请手动到「设置 → 应用管理 → 快跳」里打开");
-            }
-        });
-
-        ((Button) findViewById(R.id.btnAppDetail2)).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                openAppDetail();
             }
         });
 
@@ -587,6 +586,7 @@ public class MainActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
+        RecentTasks.apply(this, Prefs.get(this).isHideFromRecents());
         refreshAll();
         // 页面深处的订阅地址输入框（EditText）会抢走 ScrollView 的初始焦点，
         // 系统随即把列表滚到那一行 —— 结果一进 App 顶部的状态卡就被顶出屏幕，
@@ -612,6 +612,7 @@ public class MainActivity extends Activity {
         swToast.setChecked(Prefs.get(this).isToastOnHit());
         swLocalExclusive.setChecked(Prefs.get(this).isLocalExclusive());
         swKeepAlive.setChecked(Prefs.get(this).isKeepAlive());
+        swHideFromRecents.setChecked(Prefs.get(this).isHideFromRecents());
         swRootEnhance.setChecked(Prefs.get(this).isRootEnhance());
         swAutoDetect.setChecked(Prefs.get(this).isAutoDetect());
         loadingPrefs = false;

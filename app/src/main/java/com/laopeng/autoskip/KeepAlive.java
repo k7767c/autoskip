@@ -5,7 +5,6 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ServiceInfo;
@@ -21,7 +20,7 @@ import android.util.Log;
  *
  * 核心招式：让无障碍服务自己调用 startForeground() —— 同一个进程被提到前台服务优先级，
  * 系统内存回收时几乎排到最后，国产 ROM 的"后台清理"也基本带不走它。
- * 配套两件事：电池优化白名单、开机自启/省电策略引导。
+ * 配套电池优化白名单。
  *
  * 这些都是"降低概率"，不是绝对。真要 100% 抗杀只有 root 装成系统应用那条路。
  */
@@ -144,73 +143,6 @@ public class KeepAlive {
             c.startActivity(i2);
         } catch (Throwable t) {
             ToastHelper.show(c, "系统没有公开电池优化设置页，请手动到「设置 → 电池」里把快跳设为不限制");
-        }
-    }
-
-    // ---------------- 自启动 / 省电策略 ----------------
-
-    /** 各家的自启动管理页。按热门程度排的，逐个试，第一个能打开的就用。 */
-    private static final String[][] AUTOSTART_PAGES = {
-            {"com.miui.securitycenter", "com.miui.permcenter.autostart.AutoStartManagementActivity"},
-            {"com.huawei.systemmanager", "com.huawei.systemmanager.startupmgr.ui.StartupNormalAppListActivity"},
-            {"com.coloros.safecenter", "com.coloros.safecenter.permission.startup.StartupAppListActivity"},
-            {"com.oppo.safe", "com.oppo.safe.permission.startup.StartupAppListActivity"},
-            {"com.vivo.permissionmanager", "com.vivo.permissionmanager.activity.BgStartUpManagerActivity"},
-            {"com.iqoo.secure", "com.iqoo.secure.ui.phoneoptimize.AddWhiteListActivity"},
-            {"com.oneplus.security", "com.oneplus.security.chainlaunch.view.ChainLaunchAppListActivity"},
-            {"com.meizu.safe", "com.meizu.safe.security.SHOW_APPSEC"},
-            {"com.samsung.android.sm_cn", "com.samsung.android.sm_cn.ui.policy.PolicyActivity"},
-            {"com.lenovo.safecenter", "com.lenovo.safecenter.permission.PermissionManagerActivity"},
-    };
-
-    /**
-     * 打开自启动设置。国产 ROM 各家页面都不一样，只能挨个试。
-     *
-     * @return 是否成功打开了某个厂商页面（false 表示只能退到应用详情页）
-     */
-    public static boolean openAutoStart(Context c, String appLabel) {
-        String pkg = c.getPackageName();
-
-        // 小米/澎湃：「应用权限编辑」一页里同时有自启动和后台弹出界面，最省事
-        if (tryStart(c, customIntent("miui.intent.action.APP_PERM_EDITOR",
-                "com.miui.securitycenter", "com.miui.permcenter.permissions.PermissionsEditorActivity")
-                .putExtra("extra_pkgname", pkg))) {
-            return true;
-        }
-
-        // 小米/澎湃：省电策略（无限制 / 智能限制）
-        if (tryStart(c, customIntent(null, "com.miui.powerkeeper",
-                "com.miui.powerkeeper.ui.HiddenAppsConfigActivity")
-                .putExtra("package_name", pkg)
-                .putExtra("package_label", appLabel))) {
-            return true;
-        }
-
-        for (String[] page : AUTOSTART_PAGES) {
-            if (tryStart(c, customIntent(null, page[0], page[1]))) return true;
-        }
-
-        // 兜底：应用详情页。用户自己能在里面找到「后台运行 / 电池」相关项
-        tryStart(c, new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
-                .setData(Uri.parse("package:" + pkg)));
-        return false;
-    }
-
-    private static Intent customIntent(String action, String pkg, String cls) {
-        Intent i = new Intent();
-        if (action != null) i.setAction(action);
-        i.setComponent(new ComponentName(pkg, cls));
-        i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        return i;
-    }
-
-    private static boolean tryStart(Context c, Intent i) {
-        i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        try {
-            c.startActivity(i);
-            return true;
-        } catch (Throwable t) {
-            return false;
         }
     }
 

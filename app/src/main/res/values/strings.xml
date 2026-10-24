@@ -24,14 +24,12 @@
 
     <string name="sec_keepalive">后台保活</string>
     <string name="sw_keepalive">前台常驻（常驻一条通知，明显降低被系统杀掉）</string>
-    <string name="keepalive_help">跳广告的 App 最常见的故障不是"不工作"，而是被系统悄悄清理掉了。下面三件事做完基本就稳了：\n① 打开上面的「前台常驻」开关\n② 加入电池优化白名单（系统不再冻结快跳）\n③ 自启动打开、省电策略设为「无限制」\n\n再加一步更保险：在最近任务列表里给快跳加锁（下拉卡片点小锁图标），这样一键清理时不会被带走。</string>
+    <string name="keepalive_help">建议开启「前台常驻」并加入电池优化白名单，降低快跳被系统清理的概率。\n\n如仍被清理，可在手机系统设置中手动允许快跳后台运行。未开启「后台隐藏」时，也可按系统支持的方式在最近任务中锁定快跳卡片。</string>
     <string name="keepalive_state_ok">电池优化：已豁免 ✓  快跳不会被系统冻结</string>
     <string name="keepalive_state_bad">电池优化：未豁免 ✗  系统可能随时冻结快跳</string>
     <string name="keepalive_state_dead">权限已开，但服务没在跑 —— 多半被杀掉了。去无障碍列表把快跳关一下再开一下即可恢复。</string>
     <string name="keepalive_state_fg">已进入前台常驻 ✓  常驻通知生效中</string>
     <string name="btn_battery">加入电池优化白名单</string>
-    <string name="btn_autostart">打开自启动 / 省电策略</string>
-    <string name="btn_appdetail2">打开应用详情页</string>
     <string name="toast_no_notif">通知权限被拒了，常驻通知不会显示。保活仍会尝试工作，建议到系统设置里手动允许。</string>
     <string name="toast_keepalive_on">已开启前台常驻。若没看到通知，检查通知权限。</string>
     <string name="toast_keepalive_off">已退出前台常驻，被系统清理的概率会变高。</string>
@@ -178,4 +176,8 @@
     <string name="toast_groups_reset">已恢复</string>
     <!-- 底部导航角标：有东西被关停时把数字缀在标签后面 -->
     <string name="tab_badge">%1$s %2$d</string>
+    <string name="hide_recents_title">后台隐藏</string>
+    <string name="hide_recents_summary">在「最近任务」隐藏卡片</string>
+    <string name="hide_recents_help">开启后可从桌面图标重新打开快跳。隐藏卡片不会关闭无障碍服务，也不能替代后台保活设置。</string>
+    <string name="hide_recents_failed">无法更改最近任务卡片，已恢复原设置</string>
 </resources>
