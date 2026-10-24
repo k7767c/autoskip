@@ -105,6 +105,7 @@ public class RuleStore {
      * 非独占时直接走合并视图，省掉每次界面变化都要拼两次列表的开销。
      */
     public List<Rule> rulesFor(String pkg) {
+        if (prefs.isAppDisabled(pkg)) return new ArrayList<>();
         Set<String> off = prefs.getDisabledGroups();
         Set<String> on = prefs.getEnabledGroups();
         List<Rule> out = new ArrayList<>();

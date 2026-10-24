@@ -203,10 +203,7 @@ class AppsPage {
         for (ApplicationInfo ai : apps) {
             if (ai == null || ai.packageName == null) continue;
             if (self.equals(ai.packageName)) continue;
-            // 隐藏 ColorOS 系统应用，避免它们出现在可管理的应用列表中。
-            if (ai.packageName.startsWith("com.coloros.")) continue;
-            // 出厂默认不在「应用」页展示系统应用。
-            if ((ai.flags & ApplicationInfo.FLAG_SYSTEM) != 0) continue;
+            if (AppPolicy.isHiddenSystemApp(ai)) continue;
 
             boolean launchable;
             try {
