@@ -166,26 +166,46 @@ public class KeepAlive {
             {"com.lenovo.safecenter", "com.lenovo.safecenter.permission.PermissionManagerActivity"},
     };
 
+    public enum AutoStartDestination { AUTO_START, PERMISSIONS, BATTERY, APP_DETAILS, SETTINGS, FAILED }
+
     /**
      * 打开自启动设置。国产 ROM 各家页面都不一样，只能挨个试。
      *
-     * @return 是否成功打开了某个厂商页面（false 表示只能退到应用详情页）
+     * @return 实际打开的页面类型；打开失败不代表手机没有自启动功能。
      */
-    public static boolean openAutoStart(Context c, String appLabel) {
+    public static AutoStartDestination openAutoStart(Context c, String appLabel) {
         String pkg = c.getPackageName();
 
         for (String[] page : AUTOSTART_PAGES) {
             if (tryStart(c, customIntent(null, page[0], page[1])
                     .putExtra("package_name", pkg)
                     .putExtra("package_label", appLabel)
-                    .putExtra("extra_pkgname", pkg))) return true;
+                    .putExtra("extra_pkgname", pkg))) return AutoStartDestination.AUTO_START;
+        }
+
+        // 新版 ColorOS / OPlus 可能把后台启动策略迁入电池管理组件。
+        if (tryStart(c, new Intent("oplus.intent.action.APP_BATTERY_DETAIL")
+                .putExtra("package_name", pkg))) return AutoStartDestination.BATTERY;
+        String[][] batteryPages = {
+                {"com.oplus.battery", "com.oplus.powermanager.fuelgaue.PowerControlActivity"},
+                {"com.oplus.battery", "com.oplus.powermanager.fuelgaue.PowerUsageModelActivity"},
+                {"com.oplus.battery", "com.oplus.powermanager.fuelgaurd.ui.PowerUsageModelActivity"},
+                {"com.coloros.oppoguardelf", "com.coloros.powermanager.fuelgaue.PowerUsageModelActivity"},
+                {"com.coloros.oppoguardelf", "com.coloros.powermanager.fuelgaurd.ui.PowerUsageModelActivity"},
+        };
+        for (String[] page : batteryPages) {
+            if (tryStart(c, customIntent(null, page[0], page[1])
+                    .putExtra("pkgName", pkg)
+                    .putExtra("package_name", pkg)
+                    .putExtra("title", appLabel)
+                    .putExtra("drainType", "APP"))) return AutoStartDestination.BATTERY;
         }
 
         // 小米/澎湃：「应用权限编辑」一页里同时有自启动和后台弹出界面，最省事
         if (tryStart(c, customIntent("miui.intent.action.APP_PERM_EDITOR",
                 "com.miui.securitycenter", "com.miui.permcenter.permissions.PermissionsEditorActivity")
                 .putExtra("extra_pkgname", pkg))) {
-            return true;
+            return AutoStartDestination.PERMISSIONS;
         }
 
         // 小米/澎湃：省电策略（无限制 / 智能限制）
@@ -193,13 +213,14 @@ public class KeepAlive {
                 "com.miui.powerkeeper.ui.HiddenAppsConfigActivity")
                 .putExtra("package_name", pkg)
                 .putExtra("package_label", appLabel))) {
-            return true;
+            return AutoStartDestination.BATTERY;
         }
 
         // 兜底：应用详情页。用户自己能在里面找到「后台运行 / 电池」相关项
-        tryStart(c, new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
-                .setData(Uri.parse("package:" + pkg)));
-        return false;
+        if (tryStart(c, new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+                .setData(Uri.parse("package:" + pkg)))) return AutoStartDestination.APP_DETAILS;
+        if (tryStart(c, new Intent(Settings.ACTION_SETTINGS))) return AutoStartDestination.SETTINGS;
+        return AutoStartDestination.FAILED;
     }
 
     private static Intent customIntent(String action, String pkg, String cls) {
@@ -215,7 +236,9 @@ public class KeepAlive {
         try {
             c.startActivity(i);
             return true;
-        } catch (Throwable t) {
+        } catch (RuntimeException e) {
+            // 留下具体入口及拒绝原因，便于核对不同 ROM 的兼容性。
+            Log.w(TAG, "Settings entry unavailable: " + i.getComponent() + " / " + i.getAction(), e);
             return false;
         }
     }

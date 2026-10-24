@@ -399,9 +399,30 @@ public class MainActivity extends Activity {
         ((Button) findViewById(R.id.btnAutoStart)).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                boolean ok = KeepAlive.openAutoStart(MainActivity.this, getString(R.string.app_name));
-                toast(ok ? "找到「快跳」并允许自启动 / 设为「无限制」"
-                        : "你的系统没有公开的自启动设置页，请手动到「设置 → 应用管理 → 快跳」里打开");
+                KeepAlive.AutoStartDestination destination = KeepAlive.openAutoStart(
+                        MainActivity.this, getString(R.string.app_name));
+                switch (destination) {
+                    case AUTO_START:
+                        toast("找到「快跳」，允许自启动");
+                        break;
+                    case BATTERY:
+                        toast("已打开耗电管理，请允许后台运行；如有自启动选项也请开启");
+                        break;
+                    case PERMISSIONS:
+                        toast("已打开权限管理，请查找自启动选项");
+                        break;
+                    case APP_DETAILS:
+                        toast("自启动入口未能直接打开，请点「耗电管理」或「权限管理」查找后台运行 / 自启动");
+                        break;
+                    case SETTINGS:
+                        toast("请在系统设置中搜索「自启动」或「后台运行」");
+                        break;
+                    default:
+                        toast("设置页面打开失败，请手动打开手机设置，搜索「自启动」");
+                }
+                LogStore.get(MainActivity.this).add("自启动设置跳转：" + destination
+                        + "（" + Build.MANUFACTURER + " / " + Build.MODEL
+                        + "，Android " + Build.VERSION.RELEASE + "）");
             }
         });
 
