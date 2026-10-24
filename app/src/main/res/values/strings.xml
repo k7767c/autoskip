@@ -178,4 +178,8 @@
     <string name="toast_groups_reset">已恢复</string>
     <!-- 底部导航角标：有东西被关停时把数字缀在标签后面 -->
     <string name="tab_badge">%1$s %2$d</string>
+    <string name="hide_recents_title">后台隐藏</string>
+    <string name="hide_recents_summary">在「最近任务」隐藏卡片</string>
+    <string name="hide_recents_help">开启后可从桌面图标重新打开快跳。隐藏卡片不会关闭无障碍服务，也不能替代后台保活设置。</string>
+    <string name="hide_recents_failed">无法更改最近任务卡片，已恢复原设置</string>
 </resources>

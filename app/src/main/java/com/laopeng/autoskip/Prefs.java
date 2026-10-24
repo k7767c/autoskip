@@ -46,6 +46,14 @@ public class Prefs {
         sp.edit().putBoolean("keep_alive", v).apply();
     }
 
+    public boolean isHideFromRecents() {
+        return sp.getBoolean("hide_from_recents", false);
+    }
+
+    public void setHideFromRecents(boolean hidden) {
+        sp.edit().putBoolean("hide_from_recents", hidden).apply();
+    }
+
     /**
      * root 增强（锁内存 + 无障碍自愈 + 免手动解受限设置 + 开机守护模块）。
      * 默认关闭 —— 不是每台机器都有 root，打开前要先确认 su 可用。

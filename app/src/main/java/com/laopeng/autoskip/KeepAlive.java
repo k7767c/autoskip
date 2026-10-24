@@ -149,10 +149,13 @@ public class KeepAlive {
 
     // ---------------- 自启动 / 省电策略 ----------------
 
-    /** 各家的自启动管理页。按热门程度排的，逐个试，第一个能打开的就用。 */
+    /** 先尝试自启动管理页，失败后才回退权限或省电策略。 */
     private static final String[][] AUTOSTART_PAGES = {
             {"com.miui.securitycenter", "com.miui.permcenter.autostart.AutoStartManagementActivity"},
             {"com.huawei.systemmanager", "com.huawei.systemmanager.startupmgr.ui.StartupNormalAppListActivity"},
+            {"com.oplus.safecenter", "com.oplus.safecenter.startupapp.StartupAppListActivity"},
+            {"com.oplus.safecenter", "com.oplus.safecenter.permission.startup.StartupAppListActivity"},
+            {"com.coloros.safecenter", "com.coloros.safecenter.startupapp.StartupAppListActivity"},
             {"com.coloros.safecenter", "com.coloros.safecenter.permission.startup.StartupAppListActivity"},
             {"com.oppo.safe", "com.oppo.safe.permission.startup.StartupAppListActivity"},
             {"com.vivo.permissionmanager", "com.vivo.permissionmanager.activity.BgStartUpManagerActivity"},
@@ -171,6 +174,13 @@ public class KeepAlive {
     public static boolean openAutoStart(Context c, String appLabel) {
         String pkg = c.getPackageName();
 
+        for (String[] page : AUTOSTART_PAGES) {
+            if (tryStart(c, customIntent(null, page[0], page[1])
+                    .putExtra("package_name", pkg)
+                    .putExtra("package_label", appLabel)
+                    .putExtra("extra_pkgname", pkg))) return true;
+        }
+
         // 小米/澎湃：「应用权限编辑」一页里同时有自启动和后台弹出界面，最省事
         if (tryStart(c, customIntent("miui.intent.action.APP_PERM_EDITOR",
                 "com.miui.securitycenter", "com.miui.permcenter.permissions.PermissionsEditorActivity")
@@ -184,10 +194,6 @@ public class KeepAlive {
                 .putExtra("package_name", pkg)
                 .putExtra("package_label", appLabel))) {
             return true;
-        }
-
-        for (String[] page : AUTOSTART_PAGES) {
-            if (tryStart(c, customIntent(null, page[0], page[1]))) return true;
         }
 
         // 兜底：应用详情页。用户自己能在里面找到「后台运行 / 电池」相关项
