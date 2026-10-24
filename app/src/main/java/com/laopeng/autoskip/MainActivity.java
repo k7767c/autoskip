@@ -396,43 +396,6 @@ public class MainActivity extends Activity {
             }
         });
 
-        ((Button) findViewById(R.id.btnAutoStart)).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                KeepAlive.AutoStartDestination destination = KeepAlive.openAutoStart(
-                        MainActivity.this, getString(R.string.app_name));
-                switch (destination) {
-                    case AUTO_START:
-                        toast("找到「快跳」，允许自启动");
-                        break;
-                    case BATTERY:
-                        toast("已打开耗电管理，请允许后台运行；如有自启动选项也请开启");
-                        break;
-                    case PERMISSIONS:
-                        toast("已打开权限管理，请查找自启动选项");
-                        break;
-                    case APP_DETAILS:
-                        toast("自启动入口未能直接打开，请点「耗电管理」或「权限管理」查找后台运行 / 自启动");
-                        break;
-                    case SETTINGS:
-                        toast("请在系统设置中搜索「自启动」或「后台运行」");
-                        break;
-                    default:
-                        toast("设置页面打开失败，请手动打开手机设置，搜索「自启动」");
-                }
-                LogStore.get(MainActivity.this).add("自启动设置跳转：" + destination
-                        + "（" + Build.MANUFACTURER + " / " + Build.MODEL
-                        + "，Android " + Build.VERSION.RELEASE + "）");
-            }
-        });
-
-        ((Button) findViewById(R.id.btnAppDetail2)).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                openAppDetail();
-            }
-        });
-
         btnOpenSettings.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {

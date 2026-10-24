@@ -191,20 +191,6 @@
                     android:layout_marginTop="10dp"
                     android:text="@string/btn_battery" />
 
-                <Button
-                    android:id="@+id/btnAutoStart"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="6dp"
-                    android:text="@string/btn_autostart" />
-
-                <Button
-                    android:id="@+id/btnAppDetail2"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="6dp"
-                    android:text="@string/btn_appdetail2" />
-
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
