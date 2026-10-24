@@ -12,9 +12,11 @@ public class Prefs {
     private static Prefs sInstance;
 
     private final SharedPreferences sp;
+    private final android.content.pm.PackageManager packageManager;
 
     private Prefs(Context c) {
         sp = c.getApplicationContext().getSharedPreferences(FILE, Context.MODE_PRIVATE);
+        packageManager = c.getApplicationContext().getPackageManager();
     }
 
     public static synchronized Prefs get(Context c) {
@@ -122,7 +124,9 @@ public class Prefs {
 
     public boolean isAppDisabled(String pkg) {
         if (pkg == null || pkg.length() == 0) return false;
-        return getDisabledApps().contains(pkg);
+        // 自动黑名单不写入用户开关，系统应用更新后也会重新判断。
+        return AppPolicy.isHiddenSystemApp(packageManager, pkg)
+                || getDisabledApps().contains(pkg);
     }
 
     public void setAppDisabled(String pkg, boolean disabled) {

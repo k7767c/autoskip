@@ -212,7 +212,7 @@ public class SkipService extends AccessibilityService {
         try {
             Prefs prefs = Prefs.get(this);
             if (!prefs.isRunning()) return;
-            // 用户单独关掉的应用：规则层和自动识别一起停，等于不归快跳管。
+            // 用户关闭的应用及隐藏系统应用黑名单：规则和自动识别一起停。
             if (prefs.isAppDisabled(pkg)) return;
 
             List<Rule> rules = RuleStore.get(this).rulesFor(pkg);
